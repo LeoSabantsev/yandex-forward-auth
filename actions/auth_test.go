@@ -23,7 +23,7 @@ func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "/login", parsed.Path)
-	require.Equal(t, "http://auth.example.com/auth", parsed.Query().Get("rd"))
+	require.Equal(t, "http://auth.example.com/auth/", parsed.Query().Get("rd"))
 }
 
 func TestAuthHandler_UsesForwardedHeadersForReturnURL(t *testing.T) {

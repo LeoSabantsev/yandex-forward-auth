@@ -15,6 +15,7 @@ func AuthHandler(c buffalo.Context) error {
 	sessionID, err := session.ParseSessionID(c.Request())
 	if err != nil || sessionID == "" {
 		http.Redirect(c.Response(), c.Request(), loginRedirectURL(c.Request()), http.StatusFound)
+		return nil
 	}
 
 	return c.Render(http.StatusNoContent, nil)
