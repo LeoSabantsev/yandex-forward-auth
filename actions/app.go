@@ -59,6 +59,7 @@ func App() *buffalo.App {
 		app.Use(contenttype.Set("application/json"))
 
 		app.GET("/auth", AuthHandler)
+		app.GET("/login", LoginHandler)
 		app.GET("/healthz", HealthzHandler)
 	})
 
