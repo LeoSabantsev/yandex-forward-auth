@@ -8,3 +8,11 @@ node_modules/
 !.yarn/versions
 *.log
 bin/
+.git
+.github
+tmp
+bin
+node_modules
+.env
+.env.*
+.DS_Store

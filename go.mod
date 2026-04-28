@@ -5,6 +5,7 @@ go 1.26.2
 require (
 	github.com/gobuffalo/buffalo v1.1.4
 	github.com/gobuffalo/envy v1.10.2
+	github.com/gobuffalo/grift v1.5.2
 	github.com/gobuffalo/middleware v1.0.0
 	github.com/gobuffalo/suite/v4 v4.0.4
 	github.com/gobuffalo/x v0.1.0

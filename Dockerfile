@@ -1,38 +1,33 @@
 # This is a multi-stage Dockerfile and requires >= Docker 17.05
-# https://docs.docker.com/engine/userguide/eng-image/multistage-build/
-FROM gobuffalo/buffalo:v0.18.14 as builder
+FROM golang:1.26.2-bookworm AS builder
 
-ENV GOPROXY http://proxy.golang.org
+ENV GOPROXY=https://proxy.golang.org,direct
+ENV GO111MODULE=on
 
-RUN mkdir -p /src/projects
-WORKDIR /src/projects
+WORKDIR /src/app
 
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
+# Install the same Buffalo CLI version used locally.
+RUN go install github.com/gobuffalo/cli/cmd/buffalo@v0.18.14
+
+COPY go.mod go.sum ./
 RUN go mod download
 
-ADD . .
+COPY . .
+
 RUN buffalo build --static -o /bin/app
 
-FROM alpine
-RUN apk add --no-cache bash
+FROM alpine:3.20
+
 RUN apk add --no-cache ca-certificates
 
-WORKDIR /bin/
+WORKDIR /bin
 
-COPY --from=builder /bin/app .
+COPY --from=builder /bin/app /bin/app
 
-# Uncomment to run the binary in "production" mode:
-# ENV GO_ENV=production
-
-# Bind the app to 0.0.0.0 so it can be seen from outside the container
+ENV GO_ENV=production
 ENV ADDR=0.0.0.0
+ENV PORT=3000
 
 EXPOSE 3000
 
-# Uncomment to run the migrations before running the binary:
-# CMD /bin/app migrate; /bin/app
-CMD exec /bin/app
+CMD ["/bin/app"]
