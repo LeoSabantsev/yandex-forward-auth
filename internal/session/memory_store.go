@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+//TODO: think about pointer on Record
+
 type MemoryStore struct {
 	mu      sync.RWMutex
 	records map[string]Record
