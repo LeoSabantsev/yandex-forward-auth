@@ -18,7 +18,8 @@ func (p *Policy) Sanitize(raw string) string {
 		defaultURL = "/"
 	}
 
-	parsed, err := url.Parse(strings.TrimSpace(raw))
+	raw = strings.TrimSpace(raw)
+	parsed, err := url.Parse(raw)
 	if err != nil {
 		return defaultURL
 	}

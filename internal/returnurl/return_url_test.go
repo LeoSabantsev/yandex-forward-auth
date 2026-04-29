@@ -73,6 +73,17 @@ func TestPolicySanitizeAllowsRelativePath(t *testing.T) {
 	require.Equal(t, "/private?x=1", got)
 }
 
+func TestPolicySanitizeAllowsTrimmedRelativePath(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{"app.example.com"},
+		DefaultURL:   "https://app.example.com/",
+	}
+
+	got := policy.Sanitize("  /private?x=1  ")
+
+	require.Equal(t, "/private?x=1", got)
+}
+
 func TestPolicySanitizeRejectsMalformedURL(t *testing.T) {
 	policy := Policy{
 		AllowedHosts: []string{"app.example.com"},

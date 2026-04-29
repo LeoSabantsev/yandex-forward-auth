@@ -37,7 +37,7 @@ func Parse(r *http.Request) (string, error) {
 	}
 
 	if cookie.Value == "" {
-		return "", ErrMissingCookie
+		return "", ErrInvalidSession
 	}
 
 	if err := Validate(cookie.Value); err != nil {
