@@ -40,29 +40,35 @@ var (
 // declared after it to never be called.
 func App() *buffalo.App {
 	appOnce.Do(func() {
-		app = buffalo.New(buffalo.Options{
-			Env:          ENV,
-			SessionStore: sessions.Null{},
-			PreWares: []buffalo.PreWare{
-				cors.Default().Handler,
-			},
-			SessionName: "_yandex_forward_auth_session",
-		})
-
-		// Automatically redirect to SSL
-		// app.Use(forceSSL())
-
-		// Log request parameters (filters apply).
-		app.Use(paramlogger.ParameterLogger)
-
-		// Set the request content type to JSON
-		app.Use(contenttype.Set("application/json"))
-
-		app.GET("/auth", AuthHandler)
-		app.GET("/login", LoginHandler)
-		app.POST("/logout", LogoutHandler)
-		app.GET("/healthz", HealthzHandler)
+		app = newApp(NewDependencies())
 	})
+
+	return app
+}
+
+func newApp(deps *Dependencies) *buffalo.App {
+	app = buffalo.New(buffalo.Options{
+		Env:          ENV,
+		SessionStore: sessions.Null{},
+		PreWares: []buffalo.PreWare{
+			cors.Default().Handler,
+		},
+		SessionName: "_yandex_forward_auth_session",
+	})
+
+	// Automatically redirect to SSL
+	// app.Use(forceSSL())
+
+	// Log request parameters (filters apply).
+	app.Use(paramlogger.ParameterLogger)
+
+	// Set the request content type to JSON
+	app.Use(contenttype.Set("application/json"))
+
+	app.GET("/auth", deps.AuthHandler)
+	app.GET("/login", deps.LoginHandler)
+	app.POST("/logout", deps.LogoutHandler)
+	app.GET("/healthz", HealthzHandler)
 
 	return app
 }
