@@ -14,7 +14,7 @@ func TestMemoryStorePutAndGet(t *testing.T) {
 	sessionID, err := Generate()
 	require.NoError(t, err)
 
-	require.NoError(t, store.Put(context.Background(), sessionID, &Record{
+	require.NoError(t, store.Put(context.Background(), sessionID, Record{
 		UserID:    "123456789",
 		Login:     "alice",
 		Email:     "alice@example.com",
@@ -48,7 +48,7 @@ func TestMemoryStoreRevoke(t *testing.T) {
 	sessionID, err := Generate()
 	require.NoError(t, err)
 
-	require.NoError(t, store.Put(context.Background(), sessionID, &Record{
+	require.NoError(t, store.Put(context.Background(), sessionID, Record{
 		UserID:    "123456789",
 		Login:     "alice",
 		Email:     "alice@example.com",

@@ -11,7 +11,7 @@ var ErrNotFound = errors.New("session not found")
 
 type Store interface {
 	Get(ctx context.Context, sessionID string) (*Record, error)
-	Put(ctx context.Context, sessionID string, record *Record) error
+	Put(ctx context.Context, sessionID string, record Record) error
 	Revoke(ctx context.Context, sessionID string, reason string) error
 }
 

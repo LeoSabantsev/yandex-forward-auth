@@ -36,7 +36,7 @@ func (s *MemoryStore) Get(ctx context.Context, sessionID string) (*Record, error
 	return &record, nil
 }
 
-func (s *MemoryStore) Put(ctx context.Context, sessionID string, record *Record) error {
+func (s *MemoryStore) Put(ctx context.Context, sessionID string, record Record) error {
 	_ = ctx
 
 	sessionIDHash, err := Hash(sessionID)
@@ -44,13 +44,12 @@ func (s *MemoryStore) Put(ctx context.Context, sessionID string, record *Record)
 		return err
 	}
 
-	copy := *record
-	copy.SessionIDHash = sessionIDHash
+	record.SessionIDHash = sessionIDHash
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.records[sessionIDHash] = copy
+	s.records[sessionIDHash] = record
 	return nil
 }
 

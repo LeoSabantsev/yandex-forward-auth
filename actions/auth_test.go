@@ -88,7 +88,7 @@ func TestAuthHandler_Returns204AndIdentityHeadersWhenSessionExists(t *testing.T)
 	require.NoError(t, err)
 
 	store := session.NewMemoryStore()
-	require.NoError(t, store.Put(context.Background(), sessionID, &session.Record{
+	require.NoError(t, store.Put(context.Background(), sessionID, session.Record{
 		UserID:    "123456789",
 		Login:     "alice",
 		Email:     "alice@example.com",
@@ -114,7 +114,7 @@ func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsExpired(t *testing.T) 
 	require.NoError(t, err)
 
 	store := session.NewMemoryStore()
-	require.NoError(t, store.Put(context.Background(), sessionID, &session.Record{
+	require.NoError(t, store.Put(context.Background(), sessionID, session.Record{
 		UserID:    "123456789",
 		Login:     "alice",
 		Email:     "alice@example.com",
@@ -140,7 +140,7 @@ func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsRevoked(t *testing.T) 
 	revokedAt := time.Now().UTC()
 
 	store := session.NewMemoryStore()
-	require.NoError(t, store.Put(context.Background(), sessionID, &session.Record{
+	require.NoError(t, store.Put(context.Background(), sessionID, session.Record{
 		UserID:    "123456789",
 		Login:     "alice",
 		Email:     "alice@example.com",
