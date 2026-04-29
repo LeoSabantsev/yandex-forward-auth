@@ -60,7 +60,7 @@ func App() *buffalo.App {
 
 		app.GET("/auth", AuthHandler)
 		app.GET("/login", LoginHandler)
-		app.POST("/logout", LogogutHandler)
+		app.POST("/logout", LogoutHandler)
 		app.GET("/healthz", HealthzHandler)
 	})
 

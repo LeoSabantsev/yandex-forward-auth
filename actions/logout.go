@@ -9,7 +9,7 @@ import (
 	"yandex_forward_auth/internal/session"
 )
 
-func LogogutHandler(c buffalo.Context) error {
+func LogoutHandler(c buffalo.Context) error {
 	sessionID, err := session.Parse(c.Request())
 
 	if err == nil && sessionID != "" {
