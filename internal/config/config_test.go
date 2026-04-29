@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -48,4 +49,36 @@ func TestLoadReadsAllowlist(t *testing.T) {
 	require.Equal(t, []string{"example.com"}, cfg.Allowlist.EmailDomains)
 	require.Equal(t, []string{"alice", "bob"}, cfg.Allowlist.Logins)
 	require.True(t, cfg.Allowlist.DevAllowAll)
+}
+
+func TestLoadReadsYandexOAuthConfig(t *testing.T) {
+	t.Setenv("YANDEX_CLIENT_ID", " client-id ")
+	t.Setenv("YANDEX_CLIENT_SECRET", " client-secret ")
+
+	cfg := Load()
+
+	require.Equal(t, "client-id", cfg.YandexOAuth.ClientID)
+	require.Equal(t, "client-secret", cfg.YandexOAuth.ClientSecret)
+}
+
+func TestLoadUsesDefaultSessionTTL(t *testing.T) {
+	cfg := Load()
+
+	require.Equal(t, DefaultSessionTTL, cfg.SessionTTL)
+}
+
+func TestLoadReadsSessionTTL(t *testing.T) {
+	t.Setenv("YA_AUTH_SESSION_TTL", "30m")
+
+	cfg := Load()
+
+	require.Equal(t, 30*time.Minute, cfg.SessionTTL)
+}
+
+func TestLoadFallsBackForInvalidSessionTTL(t *testing.T) {
+	t.Setenv("YA_AUTH_SESSION_TTL", "nope")
+
+	cfg := Load()
+
+	require.Equal(t, DefaultSessionTTL, cfg.SessionTTL)
 }

@@ -67,6 +67,7 @@ func newApp(deps *Dependencies) *buffalo.App {
 
 	app.GET("/auth", deps.AuthHandler)
 	app.GET("/login", deps.LoginHandler)
+	app.GET("/oauth/callback", deps.OAuthCallbackHandler)
 	app.POST("/logout", deps.LogoutHandler)
 	app.GET("/healthz", HealthzHandler)
 

@@ -1,23 +1,77 @@
-# Welcome to Buffalo
+# Yandex Forward Auth
 
-Thank you for choosing Buffalo for your web development needs.
+Use the pre-built Docker image:
 
-## Starting the Application
+https://hub.docker.com/r/levsab/yandex-forward-auth
 
-Buffalo ships with a command that will watch your application and automatically rebuild the Go binary and any assets for you. To do that run the "buffalo dev" command:
+You do not need to build anything locally.
 
-```console
-buffalo dev
+## Minimal Docker Compose
+
+```yaml
+services:
+  yandex-forward-auth:
+    image: levsab/yandex-forward-auth:latest
+    restart: unless-stopped
+    environment:
+      YA_AUTH_BASE_URL: "https://auth.example.com"
+      YA_AUTH_ALLOWED_RETURN_HOSTS: "app.example.com"
+      YA_AUTH_DEFAULT_REDIRECT_URL: "https://app.example.com/"
+      YA_AUTH_ALLOWED_USER_IDS: "123456789"
+      YANDEX_CLIENT_ID: "${YANDEX_CLIENT_ID}"
+      YANDEX_CLIENT_SECRET: "${YANDEX_CLIENT_SECRET}"
+      YA_AUTH_SESSION_TTL: "8h"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 ```
 
-If you point your browser to [http://127.0.0.1:3000](http://127.0.0.1:3000) you should see a "Welcome to Buffalo!" page.
+## Traefik YAML
 
-**Congratulations!** You now have your Buffalo application up and running.
+```yaml
+http:
+  routers:
+    yandex-forward-auth:
+      rule: "Host(`auth.example.com`)"
+      service: yandex-forward-auth
 
-## What Next?
+    app:
+      rule: "Host(`app.example.com`)"
+      service: app
+      middlewares:
+        - yandex-forward-auth
 
-We recommend you heading over to [http://gobuffalo.io](http://gobuffalo.io) and reviewing all of the great documentation there.
+  services:
+    yandex-forward-auth:
+      loadBalancer:
+        servers:
+          - url: "http://yandex-forward-auth:3000"
 
-Good luck!
+    app:
+      loadBalancer:
+        servers:
+          - url: "http://app:8080"
 
-[Powered by Buffalo](http://gobuffalo.io)
+  middlewares:
+    yandex-forward-auth:
+      forwardAuth:
+        address: "http://yandex-forward-auth:3000/auth"
+        preserveLocationHeader: true
+        trustForwardHeader: true
+        authRequestHeaders:
+          - Cookie
+          - X-Forwarded-Method
+          - X-Forwarded-Proto
+          - X-Forwarded-Host
+          - X-Forwarded-Uri
+          - X-Forwarded-For
+        authResponseHeaders:
+          - X-Auth-User
+          - X-Auth-Login
+          - X-Auth-Email
+          - X-Auth-Session-ID
+        maxBodySize: 1048576
+        maxResponseBodySize: 8192
+```

@@ -7,6 +7,7 @@ import (
 	"github.com/gobuffalo/buffalo"
 
 	"yandex_forward_auth/internal/oauthstate"
+	"yandex_forward_auth/internal/yandex"
 )
 
 func (d *Dependencies) LoginHandler(c buffalo.Context) error {
@@ -27,6 +28,8 @@ func (d *Dependencies) LoginHandler(c buffalo.Context) error {
 		return c.Render(http.StatusInternalServerError, nil)
 	}
 
+	codeChallenge := oauthstate.CodeChallengeS256(codeVerifier)
+
 	now := time.Now().UTC()
 	if err := d.OAuthStateStore.Put(c.Request().Context(), stateID, oauthstate.Record{
 		Nonce:        nonce,
@@ -40,9 +43,13 @@ func (d *Dependencies) LoginHandler(c buffalo.Context) error {
 
 	oauthstate.SetNonceCookie(c.Response(), nonce, oauthstate.DefaultTTL)
 
-	c.Response().Header().Set("Content-Type", "text/plain; charset=utf-8")
-	c.Response().WriteHeader(http.StatusNotImplemented)
-	_, err = c.Response().Write([]byte("login oauth transaction created\nstate=" + stateID + "\nreturn_url=" + returnURL + "\n"))
+	authURL := yandex.AuthCodeURL(yandex.AuthCodeURLParams{
+		ClientID:      d.Config.YandexOAuth.ClientID,
+		RedirectURI:   d.Config.BaseURL + "/oauth/callback",
+		State:         stateID,
+		CodeChallenge: codeChallenge,
+	})
 
-	return err
+	http.Redirect(c.Response(), c.Request(), authURL, http.StatusFound)
+	return nil
 }

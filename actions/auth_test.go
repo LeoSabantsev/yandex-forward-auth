@@ -13,6 +13,7 @@ import (
 	"yandex_forward_auth/internal/config"
 	"yandex_forward_auth/internal/oauthstate"
 	"yandex_forward_auth/internal/session"
+	"yandex_forward_auth/internal/yandex"
 )
 
 func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
@@ -221,6 +222,8 @@ func TestHealthzHandler_Returns204(t *testing.T) {
 }
 
 var testSessionStore session.Store = session.NewMemoryStore()
+var testOAuthStateStore oauthstate.Store = oauthstate.NewMemoryStore()
+var testYandexClient yandex.Client
 
 func withSessionStore(t *testing.T, store session.Store) {
 	t.Helper()
@@ -230,6 +233,28 @@ func withSessionStore(t *testing.T, store session.Store) {
 
 	t.Cleanup(func() {
 		testSessionStore = old
+	})
+}
+
+func withOAuthStateStore(t *testing.T, store oauthstate.Store) {
+	t.Helper()
+
+	old := testOAuthStateStore
+	testOAuthStateStore = store
+
+	t.Cleanup(func() {
+		testOAuthStateStore = old
+	})
+}
+
+func withYandexClient(t *testing.T, client yandex.Client) {
+	t.Helper()
+
+	old := testYandexClient
+	testYandexClient = client
+
+	t.Cleanup(func() {
+		testYandexClient = old
 	})
 }
 
@@ -249,7 +274,8 @@ func performRequest(method string, target string, headers map[string]string, coo
 	newApp(&Dependencies{
 		Config:          config.Load(),
 		SessionStore:    testSessionStore,
-		OAuthStateStore: oauthstate.NewMemoryStore(),
+		OAuthStateStore: testOAuthStateStore,
+		YandexClient:    testYandexClient,
 	}).ServeHTTP(res, req)
 
 	return res

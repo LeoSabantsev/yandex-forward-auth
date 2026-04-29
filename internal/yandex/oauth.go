@@ -1,6 +1,8 @@
 package yandex
 
-import "net/url"
+import (
+	"net/url"
+)
 
 const (
 	AuthorizeEndpoint = "https://oauth.yandex.com/authorize"

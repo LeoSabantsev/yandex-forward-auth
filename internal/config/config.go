@@ -3,15 +3,25 @@ package config
 import (
 	"os"
 	"strings"
+	"time"
 
 	"yandex_forward_auth/internal/allowlist"
 	"yandex_forward_auth/internal/returnurl"
 )
 
+const DefaultSessionTTL = 8 * time.Hour
+
+type YandexOAuthConfig struct {
+	ClientID     string
+	ClientSecret string
+}
+
 type Config struct {
 	BaseURL         string
 	ReturnURLPolicy returnurl.Policy
 	Allowlist       allowlist.List
+	YandexOAuth     YandexOAuthConfig
+	SessionTTL      time.Duration
 }
 
 func Load() Config {
@@ -29,6 +39,11 @@ func Load() Config {
 			Logins:       splitCSV(os.Getenv("YA_AUTH_ALLOWED_LOGINS")),
 			DevAllowAll:  envBool("YA_AUTH_DEV_ALLOW_ALL"),
 		},
+		YandexOAuth: YandexOAuthConfig{
+			ClientID:     strings.TrimSpace(os.Getenv("YANDEX_CLIENT_ID")),
+			ClientSecret: strings.TrimSpace(os.Getenv("YANDEX_CLIENT_SECRET")),
+		},
+		SessionTTL: sessionTTL(),
 	}
 }
 
@@ -48,4 +63,18 @@ func splitCSV(value string) []string {
 
 func envBool(name string) bool {
 	return strings.EqualFold(strings.TrimSpace(os.Getenv(name)), "true")
+}
+
+func sessionTTL() time.Duration {
+	raw := strings.TrimSpace(os.Getenv("YA_AUTH_SESSION_TTL"))
+	if raw == "" {
+		return DefaultSessionTTL
+	}
+
+	ttl, err := time.ParseDuration(raw)
+	if err != nil || ttl <= 0 {
+		return DefaultSessionTTL
+	}
+
+	return ttl
 }
