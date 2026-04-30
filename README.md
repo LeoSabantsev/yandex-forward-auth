@@ -28,6 +28,25 @@ services:
       retries: 3
 ```
 
+## Environment Variables
+
+| Variable | Purpose |
+| --- | --- |
+| `YA_AUTH_BASE_URL` | Public URL of this auth service, used for OAuth callback URLs and redirects. |
+| `YA_AUTH_ALLOWED_RETURN_HOSTS` | Comma-separated list of app hosts that `rd` may redirect back to. |
+| `YA_AUTH_DEFAULT_REDIRECT_URL` | Fallback redirect URL when `rd` is missing or not allowed. |
+| `YANDEX_CLIENT_ID` | Yandex OAuth application client ID. |
+| `YANDEX_CLIENT_SECRET` | Yandex OAuth application client secret. |
+| `YA_AUTH_ALLOWED_USER_IDS` | Comma-separated allowed stable Yandex user IDs. |
+| `YA_AUTH_ALLOWED_EMAILS` | Comma-separated allowed email addresses. |
+| `YA_AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed email domains. |
+| `YA_AUTH_ALLOWED_LOGINS` | Comma-separated allowed Yandex logins. |
+| `YA_AUTH_DEV_ALLOW_ALL` | Allows every authenticated Yandex user when set to `true`. |
+| `YA_AUTH_SESSION_TTL` | Local session lifetime as a Go duration, for example `8h` or `30m`. |
+| `GO_ENV` | Buffalo environment name; the image defaults to `production`. |
+| `ADDR` | Listen address; the image defaults to `0.0.0.0`. |
+| `PORT` | Listen port; the image defaults to `3000`. |
+
 ## Traefik YAML
 
 ```yaml
