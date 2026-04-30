@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -45,4 +46,23 @@ func TestClearCookieExpiresSessionCookie(t *testing.T) {
 	require.True(t, cookie.HttpOnly)
 	require.True(t, cookie.Secure)
 	require.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
+}
+
+func TestSetCookie(t *testing.T) {
+	sessionID, err := Generate()
+	require.NoError(t, err)
+
+	res := httptest.NewRecorder()
+
+	Set(res, sessionID, time.Hour)
+
+	cookies := res.Result().Cookies()
+	require.Len(t, cookies, 1)
+	require.Equal(t, CookieName, cookies[0].Name)
+	require.Equal(t, sessionID, cookies[0].Value)
+	require.Equal(t, "/", cookies[0].Path)
+	require.Equal(t, 3600, cookies[0].MaxAge)
+	require.True(t, cookies[0].HttpOnly)
+	require.True(t, cookies[0].Secure)
+	require.Equal(t, http.SameSiteLaxMode, cookies[0].SameSite)
 }

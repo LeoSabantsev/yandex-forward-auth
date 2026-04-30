@@ -4,40 +4,46 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/gobuffalo/buffalo"
 
+	"yandex_forward_auth/internal/allowlist"
 	"yandex_forward_auth/internal/session"
 )
 
-var authSessionStore session.Store = session.NewMemoryStore()
-
-func AuthHandler(c buffalo.Context) error {
+func (d *Dependencies) AuthHandler(c buffalo.Context) error {
 	sessionID, err := session.Parse(c.Request())
 	if err != nil || sessionID == "" {
 		if err != nil && !errors.Is(err, session.ErrMissingCookie) {
 			session.Clear(c.Response())
 		}
 
-		http.Redirect(c.Response(), c.Request(), loginRedirectURL(c.Request()), http.StatusFound)
+		http.Redirect(c.Response(), c.Request(), d.loginRedirectURL(c.Request()), http.StatusFound)
 		return nil
 	}
 
-	record, err := authSessionStore.Get(c.Request().Context(), sessionID)
+	record, err := d.SessionStore.Get(c.Request().Context(), sessionID)
 	if err != nil {
 		session.Clear(c.Response())
-		http.Redirect(c.Response(), c.Request(), loginRedirectURL(c.Request()), http.StatusFound)
+		http.Redirect(c.Response(), c.Request(), d.loginRedirectURL(c.Request()), http.StatusFound)
 		return nil
 	}
 
 	now := time.Now().UTC()
 	if record.Expired(now) || record.Revoked() {
 		session.Clear(c.Response())
-		http.Redirect(c.Response(), c.Request(), loginRedirectURL(c.Request()), http.StatusFound)
+		http.Redirect(c.Response(), c.Request(), d.loginRedirectURL(c.Request()), http.StatusFound)
 		return nil
+	}
+
+	if !d.Config.Allowlist.Allows(allowlist.Subject{
+		UserID: record.UserID,
+		Email:  record.Email,
+		Login:  record.Login,
+	}) {
+		return c.Render(http.StatusForbidden, nil)
 	}
 
 	c.Response().Header().Set("X-Auth-User", record.UserID)
@@ -48,8 +54,8 @@ func AuthHandler(c buffalo.Context) error {
 	return c.Render(http.StatusNoContent, nil)
 }
 
-func loginRedirectURL(r *http.Request) string {
-	baseURL := strings.TrimRight(os.Getenv("YA_AUTH_BASE_URL"), "/")
+func (d *Dependencies) loginRedirectURL(r *http.Request) string {
+	baseURL := d.Config.BaseURL
 	return baseURL + "/login?rd=" + url.QueryEscape(originalRequestURL(r))
 }
 

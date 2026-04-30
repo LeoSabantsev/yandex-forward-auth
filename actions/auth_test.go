@@ -10,7 +10,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"yandex_forward_auth/internal/config"
+	"yandex_forward_auth/internal/oauthstate"
 	"yandex_forward_auth/internal/session"
+	"yandex_forward_auth/internal/yandex"
 )
 
 func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
@@ -84,6 +87,8 @@ func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsMissingFromStore(t *te
 }
 
 func TestAuthHandler_Returns204AndIdentityHeadersWhenSessionExists(t *testing.T) {
+	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "123456789")
+
 	sessionID, err := session.Generate()
 	require.NoError(t, err)
 
@@ -107,6 +112,56 @@ func TestAuthHandler_Returns204AndIdentityHeadersWhenSessionExists(t *testing.T)
 	require.Equal(t, "alice", res.Header().Get("X-Auth-Login"))
 	require.Equal(t, "alice@example.com", res.Header().Get("X-Auth-Email"))
 	require.Equal(t, sessionID, res.Header().Get("X-Auth-Session-ID"))
+}
+
+func TestAuthHandler_Returns403WhenSessionUserIsNoLongerAllowed(t *testing.T) {
+	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "987654321")
+
+	sessionID, err := session.Generate()
+	require.NoError(t, err)
+
+	store := session.NewMemoryStore()
+	require.NoError(t, store.Put(context.Background(), sessionID, session.Record{
+		UserID:    "123456789",
+		Login:     "alice",
+		Email:     "alice@example.com",
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
+	}))
+
+	withSessionStore(t, store)
+
+	res := performRequest("GET", "http://auth.example.com/auth", nil, []*http.Cookie{
+		{Name: session.CookieName, Value: sessionID},
+	})
+
+	require.Equal(t, http.StatusForbidden, res.Code)
+	require.Empty(t, res.Header().Get("X-Auth-User"))
+}
+
+func TestAuthHandler_AllowsSessionWhenDevAllowAllIsExplicit(t *testing.T) {
+	t.Setenv("YA_AUTH_DEV_ALLOW_ALL", "true")
+
+	sessionID, err := session.Generate()
+	require.NoError(t, err)
+
+	store := session.NewMemoryStore()
+	require.NoError(t, store.Put(context.Background(), sessionID, session.Record{
+		UserID:    "123456789",
+		Login:     "alice",
+		Email:     "alice@example.com",
+		CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
+	}))
+
+	withSessionStore(t, store)
+
+	res := performRequest("GET", "http://auth.example.com/auth", nil, []*http.Cookie{
+		{Name: session.CookieName, Value: sessionID},
+	})
+
+	require.Equal(t, http.StatusNoContent, res.Code)
+	require.Equal(t, "123456789", res.Header().Get("X-Auth-User"))
 }
 
 func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsExpired(t *testing.T) {
@@ -166,21 +221,40 @@ func TestHealthzHandler_Returns204(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, res.Code)
 }
 
-func TestLoginHandler_IsPlaceholder(t *testing.T) {
-	res := performRequest("GET", "http://auth.example.com/login", nil, nil)
-
-	require.Equal(t, http.StatusNotImplemented, res.Code)
-	require.Contains(t, res.Body.String(), "login is not implemented yet")
-}
+var testSessionStore session.Store = session.NewMemoryStore()
+var testOAuthStateStore oauthstate.Store = oauthstate.NewMemoryStore()
+var testYandexClient yandex.Client
 
 func withSessionStore(t *testing.T, store session.Store) {
 	t.Helper()
 
-	old := authSessionStore
-	authSessionStore = store
+	old := testSessionStore
+	testSessionStore = store
 
 	t.Cleanup(func() {
-		authSessionStore = old
+		testSessionStore = old
+	})
+}
+
+func withOAuthStateStore(t *testing.T, store oauthstate.Store) {
+	t.Helper()
+
+	old := testOAuthStateStore
+	testOAuthStateStore = store
+
+	t.Cleanup(func() {
+		testOAuthStateStore = old
+	})
+}
+
+func withYandexClient(t *testing.T, client yandex.Client) {
+	t.Helper()
+
+	old := testYandexClient
+	testYandexClient = client
+
+	t.Cleanup(func() {
+		testYandexClient = old
 	})
 }
 
@@ -196,7 +270,13 @@ func performRequest(method string, target string, headers map[string]string, coo
 	}
 
 	res := httptest.NewRecorder()
-	App().ServeHTTP(res, req)
+
+	newApp(&Dependencies{
+		Config:          config.Load(),
+		SessionStore:    testSessionStore,
+		OAuthStateStore: testOAuthStateStore,
+		YandexClient:    testYandexClient,
+	}).ServeHTTP(res, req)
 
 	return res
 }

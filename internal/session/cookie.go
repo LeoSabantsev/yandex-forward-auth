@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
+	"time"
 )
 
 const (
@@ -72,6 +73,18 @@ func Clear(w http.ResponseWriter) {
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func Set(w http.ResponseWriter, sessionID string, ttl time.Duration) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieName,
+		Value:    sessionID,
+		Path:     "/",
+		MaxAge:   int(ttl.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
