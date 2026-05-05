@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bobesa/go-domain-util/domainutil"
 	"github.com/gobuffalo/buffalo"
 
 	"yandex_forward_auth/internal/allowlist"
@@ -98,7 +99,8 @@ func (d *Dependencies) OAuthCallbackHandler(c buffalo.Context) error {
 		return c.Render(http.StatusInternalServerError, nil)
 	}
 
-	session.Set(c.Response(), sessionID, d.Config.SessionTTL)
+	domain := domainutil.Domain(d.Config.BaseURL)
+	session.Set(c.Response(), sessionID, d.Config.SessionTTL, "."+domain)
 	http.Redirect(c.Response(), c.Request(), record.ReturnURL, http.StatusFound)
 	return nil
 }
