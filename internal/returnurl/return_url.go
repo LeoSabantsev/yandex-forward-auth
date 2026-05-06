@@ -3,6 +3,7 @@ package returnurl
 import (
 	"net"
 	"net/url"
+	"path"
 	"strings"
 )
 
@@ -51,7 +52,8 @@ func (p Policy) sanitizeAbsolute(parsed *url.URL, defaultURL string) string {
 
 func (p Policy) hostAllowed(host string) bool {
 	for _, allowed := range p.AllowedHosts {
-		if host == normalizeHost(allowed) {
+		matched, err := path.Match(normalizeHost(allowed), host)
+		if err == nil && matched {
 			return true
 		}
 	}

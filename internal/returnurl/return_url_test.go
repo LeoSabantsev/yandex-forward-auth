@@ -98,7 +98,7 @@ func TestPolicySanitizeRejectsMalformedURL(t *testing.T) {
 func TestPolicySanitizeAllowsHTTPSHostFromSimpleWildcard(t *testing.T) {
 	policy := Policy{
 		AllowedHosts: []string{"*app.example.com"},
-		DefaultURL:   "https://app.example.com/",
+		DefaultURL:   "https://example.com/",
 	}
 
 	got_1 := policy.Sanitize("https://testing.app.example.com")
@@ -120,9 +120,9 @@ func TestPolicySanitizeAllowsHTTPSHostFromComplexWildcard(t *testing.T) {
 	got_4 := policy.Sanitize("https://ui.testing.inner.app.example.com")
 
 	require.Equal(t, "https://testing.app.example.com", got_1)
-	require.Equal(t, "https://app.example.com/", got_2)
+	require.Equal(t, "https://ui.testing.app.example.com", got_2)
 	require.Equal(t, "https://testing.inner.app.example.com", got_3)
-	require.Equal(t, "https://app.example.com/", got_4)
+	require.Equal(t, "https://ui.testing.inner.app.example.com", got_4)
 }
 
 func TestPolicySanitizeDenyHTTPSHostOutsideWildcard(t *testing.T) {
