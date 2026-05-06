@@ -79,27 +79,15 @@ func Clear(w http.ResponseWriter) {
 	})
 }
 
-func Set(w http.ResponseWriter, sessionID string, ttl time.Duration, domain ...string) {
-	if len(domain) > 0 {
-		http.SetCookie(w, &http.Cookie{
-			Name:     CookieName,
-			Value:    sessionID,
-			Path:     "/",
-			Domain:   domain[0],
-			MaxAge:   int(ttl.Seconds()),
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
-	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:     CookieName,
-			Value:    sessionID,
-			Path:     "/",
-			MaxAge:   int(ttl.Seconds()),
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
-	}
+func Set(w http.ResponseWriter, sessionID string, ttl time.Duration, cookieDomain string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieName,
+		Value:    sessionID,
+		Path:     "/",
+		Domain:   cookieDomain,
+		MaxAge:   int(ttl.Seconds()),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
 }

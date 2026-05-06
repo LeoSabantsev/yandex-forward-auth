@@ -53,34 +53,15 @@ func TestSetCookie(t *testing.T) {
 	require.NoError(t, err)
 
 	res := httptest.NewRecorder()
+	domain := "example.com"
 
-	Set(res, sessionID, time.Hour)
-
-	cookies := res.Result().Cookies()
-	require.Len(t, cookies, 1)
-	require.Equal(t, CookieName, cookies[0].Name)
-	require.Equal(t, sessionID, cookies[0].Value)
-	require.Equal(t, "/", cookies[0].Path)
-	require.Equal(t, 3600, cookies[0].MaxAge)
-	require.True(t, cookies[0].HttpOnly)
-	require.True(t, cookies[0].Secure)
-	require.Equal(t, http.SameSiteLaxMode, cookies[0].SameSite)
-}
-
-func TestSetCookieWithDomain(t *testing.T) {
-	sessionID, err := Generate()
-	require.NoError(t, err)
-
-	res := httptest.NewRecorder()
-
-	test_domain := ".test.example.com"
-	Set(res, sessionID, time.Hour, test_domain)
+	Set(res, sessionID, time.Hour, domain)
 
 	cookies := res.Result().Cookies()
 	require.Len(t, cookies, 1)
 	require.Equal(t, CookieName, cookies[0].Name)
 	require.Equal(t, sessionID, cookies[0].Value)
-	require.Equal(t, "test.example.com", cookies[0].Domain)
+	require.Equal(t, "example.com", cookies[0].Domain)
 	require.Equal(t, "/", cookies[0].Path)
 	require.Equal(t, 3600, cookies[0].MaxAge)
 	require.True(t, cookies[0].HttpOnly)

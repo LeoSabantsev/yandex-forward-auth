@@ -2,11 +2,13 @@ package actions
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
-	"github.com/bobesa/go-domain-util/domainutil"
 	"github.com/gobuffalo/buffalo"
+	"golang.org/x/net/publicsuffix"
 
 	"yandex_forward_auth/internal/allowlist"
 	"yandex_forward_auth/internal/oauthstate"
@@ -99,8 +101,31 @@ func (d *Dependencies) OAuthCallbackHandler(c buffalo.Context) error {
 		return c.Render(http.StatusInternalServerError, nil)
 	}
 
-	domain := domainutil.Domain(d.Config.BaseURL)
-	session.Set(c.Response(), sessionID, d.Config.SessionTTL, "."+domain)
+	domain, err := getCookieDomain(d.Config.BaseURL)
+	if err != nil {
+		return c.Render(http.StatusInternalServerError, nil)
+	}
+	session.Set(c.Response(), sessionID, d.Config.SessionTTL, domain)
 	http.Redirect(c.Response(), c.Request(), record.ReturnURL, http.StatusFound)
 	return nil
+}
+
+func getCookieDomain(baseURL string) (string, error) {
+	// TODO make searching of cookie domain from allowed return hosts, and if empty - got it from baseURL
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	host := u.Hostname()
+	if host == "" {
+		return "", fmt.Errorf("base URL has empty host")
+	}
+
+	domain, err := publicsuffix.EffectiveTLDPlusOne(host)
+	if err != nil {
+		return "", err
+	}
+
+	return domain, nil
 }

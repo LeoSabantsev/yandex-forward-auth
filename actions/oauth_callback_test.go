@@ -15,6 +15,24 @@ import (
 	"yandex_forward_auth/internal/yandex"
 )
 
+func TestGetCookieDomain_GetDomainFromSimpleHostWithPath(t *testing.T) {
+	baseURL := "https://example.com/entry"
+
+	res, err := getCookieDomain(baseURL)
+	require.NoError(t, err)
+
+	require.Equal(t, "example.com", res)
+}
+
+func TestGetCookieDomain_GetDomainFromComplexHost(t *testing.T) {
+	baseURL := "https://app.example.com/entry"
+
+	res, err := getCookieDomain(baseURL)
+	require.NoError(t, err)
+
+	require.Equal(t, "example.com", res)
+}
+
 func TestOAuthCallbackHandler_Returns400ForOAuthError(t *testing.T) {
 	res := performRequest("GET", "http://auth.example.com/oauth/callback?error=access_denied", nil, nil)
 
@@ -37,6 +55,7 @@ func TestOAuthCallbackHandler_CreatesSessionAndRedirectsForValidStateRecord(t *t
 	t.Setenv("YANDEX_CLIENT_ID", "client-id")
 	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "123456789")
 	t.Setenv("YA_AUTH_SESSION_TTL", "30m")
+	t.Setenv("YA_AUTH_BASE_URL", "https://app.example.com/")
 
 	nonce, err := oauthstate.GenerateNonce()
 	require.NoError(t, err)
@@ -96,6 +115,7 @@ func TestOAuthCallbackCreatedSessionPassesAuth(t *testing.T) {
 	t.Setenv("YANDEX_CLIENT_ID", "client-id")
 	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "123456789")
 	t.Setenv("YA_AUTH_SESSION_TTL", "30m")
+	t.Setenv("YA_AUTH_BASE_URL", "https://app.example.com/")
 
 	sessionStore := session.NewMemoryStore()
 	withSessionStore(t, sessionStore)
