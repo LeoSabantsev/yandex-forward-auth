@@ -82,3 +82,34 @@ func TestLoadFallsBackForInvalidSessionTTL(t *testing.T) {
 
 	require.Equal(t, DefaultSessionTTL, cfg.SessionTTL)
 }
+
+func TestGetCookieDomain_GetDomainFromSpecifiedEnv(t *testing.T) {
+	t.Setenv("YA_AUTH_COOKIE_DOMAIN", "example.com")
+	t.Setenv("YA_AUTH_BASE_URL", "https://auth.example.com/entry")
+
+	cfg := Load()
+	res, err := cfg.GetCookieDomain()
+	require.NoError(t, err)
+
+	require.Equal(t, "example.com", res)
+}
+
+func TestGetCookieDomain_GetDomainFromSimpleBaseURL(t *testing.T) {
+	t.Setenv("YA_AUTH_BASE_URL", "https://example.com/entry")
+
+	cfg := Load()
+	res, err := cfg.GetCookieDomain()
+	require.NoError(t, err)
+
+	require.Equal(t, "example.com", res)
+}
+
+func TestGetCookieDomain_GetDomainFromComplexBaseURL(t *testing.T) {
+	t.Setenv("YA_AUTH_BASE_URL", "https://app.example.com/entry")
+
+	cfg := Load()
+	res, err := cfg.GetCookieDomain()
+	require.NoError(t, err)
+
+	require.Equal(t, "example.com", res)
+}

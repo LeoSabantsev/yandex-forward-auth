@@ -18,6 +18,7 @@ type YandexOAuthConfig struct {
 
 type Config struct {
 	BaseURL         string
+	CookieDomain    string
 	ReturnURLPolicy returnurl.Policy
 	Allowlist       allowlist.List
 	YandexOAuth     YandexOAuthConfig
@@ -26,7 +27,8 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		BaseURL: strings.TrimRight(strings.TrimSpace(os.Getenv("YA_AUTH_BASE_URL")), "/"),
+		BaseURL:      strings.TrimRight(strings.TrimSpace(os.Getenv("YA_AUTH_BASE_URL")), "/"),
+		CookieDomain: strings.TrimSpace(os.Getenv("YA_AUTH_COOKIE_DOMAIN")),
 		ReturnURLPolicy: returnurl.Policy{
 			AllowedHosts: splitCSV(os.Getenv("YA_AUTH_ALLOWED_RETURN_HOSTS")),
 			DefaultURL:   strings.TrimSpace(os.Getenv("YA_AUTH_DEFAULT_REDIRECT_URL")),

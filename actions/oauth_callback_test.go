@@ -15,24 +15,6 @@ import (
 	"yandex_forward_auth/internal/yandex"
 )
 
-func TestGetCookieDomain_GetDomainFromSimpleHostWithPath(t *testing.T) {
-	baseURL := "https://example.com/entry"
-
-	res, err := getCookieDomain(baseURL)
-	require.NoError(t, err)
-
-	require.Equal(t, "example.com", res)
-}
-
-func TestGetCookieDomain_GetDomainFromComplexHost(t *testing.T) {
-	baseURL := "https://app.example.com/entry"
-
-	res, err := getCookieDomain(baseURL)
-	require.NoError(t, err)
-
-	require.Equal(t, "example.com", res)
-}
-
 func TestOAuthCallbackHandler_Returns400ForOAuthError(t *testing.T) {
 	res := performRequest("GET", "http://auth.example.com/oauth/callback?error=access_denied", nil, nil)
 
