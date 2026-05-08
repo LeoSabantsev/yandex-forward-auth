@@ -26,7 +26,7 @@ type Config struct {
 }
 
 func Load() Config {
-	return Config{
+	config := Config{
 		BaseURL:      strings.TrimRight(strings.TrimSpace(os.Getenv("YA_AUTH_BASE_URL")), "/"),
 		CookieDomain: strings.TrimSpace(os.Getenv("YA_AUTH_COOKIE_DOMAIN")),
 		ReturnURLPolicy: returnurl.Policy{
@@ -47,6 +47,12 @@ func Load() Config {
 		},
 		SessionTTL: sessionTTL(),
 	}
+
+	if config.BaseURL == "" {
+		panic("Missing Base URL, which is required")
+	}
+
+	return config
 }
 
 func splitCSV(value string) []string {
