@@ -17,8 +17,6 @@ import (
 )
 
 func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "")
-
 	res := performRequest("GET", "http://auth.example.com/auth", nil, nil)
 
 	require.Equal(t, http.StatusFound, res.Code)
@@ -32,8 +30,6 @@ func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
 }
 
 func TestAuthHandler_UsesForwardedHeadersForReturnURL(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "")
-
 	headers := map[string]string{
 		"X-Forwarded-Proto": "https",
 		"X-Forwarded-Host":  "app.example.com",

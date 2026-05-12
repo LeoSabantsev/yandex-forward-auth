@@ -1,11 +1,16 @@
 package config
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 )
+
+func init() {
+	os.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
+}
 
 func TestLoadReadsReturnURLPolicy(t *testing.T) {
 	t.Setenv("YA_AUTH_BASE_URL", " https://auth.example.com/ ")
