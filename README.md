@@ -15,6 +15,7 @@ services:
     restart: unless-stopped
     environment:
       YA_AUTH_BASE_URL: "https://auth.example.com"
+      YA_AUTH_COOKIE_DOMAIN: "example.com"
       YA_AUTH_ALLOWED_RETURN_HOSTS: "app.example.com"
       YA_AUTH_DEFAULT_REDIRECT_URL: "https://app.example.com/"
       YA_AUTH_ALLOWED_USER_IDS: "123456789"
@@ -33,6 +34,7 @@ services:
 | Variable | Purpose |
 | --- | --- |
 | `YA_AUTH_BASE_URL` | Public URL of this auth service, used for OAuth callback URLs and redirects. |
+| `YA_AUTH_COOKIE_DOMAIN` | Top-level domain, which auth service covers; the image defaults to set from `YA_AUTH_BASE_URL` |
 | `YA_AUTH_ALLOWED_RETURN_HOSTS` | Comma-separated list of app hosts that `rd` may redirect back to. |
 | `YA_AUTH_DEFAULT_REDIRECT_URL` | Fallback redirect URL when `rd` is missing or not allowed. |
 | `YANDEX_CLIENT_ID` | Yandex OAuth application client ID. |

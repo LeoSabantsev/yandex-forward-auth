@@ -14,10 +14,15 @@ import (
 )
 
 func (d *Dependencies) AuthHandler(c buffalo.Context) error {
+	cookieDomain, err := d.Config.GetCookieDomain()
+	if err != nil {
+		return c.Render(http.StatusInternalServerError, nil)
+	}
+
 	sessionID, err := session.Parse(c.Request())
 	if err != nil || sessionID == "" {
 		if err != nil && !errors.Is(err, session.ErrMissingCookie) {
-			session.Clear(c.Response())
+			session.Clear(c.Response(), cookieDomain)
 		}
 
 		http.Redirect(c.Response(), c.Request(), d.loginRedirectURL(c.Request()), http.StatusFound)
@@ -26,14 +31,14 @@ func (d *Dependencies) AuthHandler(c buffalo.Context) error {
 
 	record, err := d.SessionStore.Get(c.Request().Context(), sessionID)
 	if err != nil {
-		session.Clear(c.Response())
+		session.Clear(c.Response(), cookieDomain)
 		http.Redirect(c.Response(), c.Request(), d.loginRedirectURL(c.Request()), http.StatusFound)
 		return nil
 	}
 
 	now := time.Now().UTC()
 	if record.Expired(now) || record.Revoked() {
-		session.Clear(c.Response())
+		session.Clear(c.Response(), cookieDomain)
 		http.Redirect(c.Response(), c.Request(), d.loginRedirectURL(c.Request()), http.StatusFound)
 		return nil
 	}
