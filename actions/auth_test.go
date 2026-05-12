@@ -17,7 +17,7 @@ import (
 )
 
 func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
+	t.Setenv("YA_AUTH_BASE_URL", "")
 
 	res := performRequest("GET", "http://auth.example.com/auth", nil, nil)
 
@@ -32,7 +32,7 @@ func TestAuthHandler_RedirectsToLoginWhenSessionCookieMissing(t *testing.T) {
 }
 
 func TestAuthHandler_UsesForwardedHeadersForReturnURL(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
+	t.Setenv("YA_AUTH_BASE_URL", "")
 
 	headers := map[string]string{
 		"X-Forwarded-Proto": "https",
@@ -53,8 +53,6 @@ func TestAuthHandler_UsesForwardedHeadersForReturnURL(t *testing.T) {
 }
 
 func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionCookieIsInvalid(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	reqCookie := &http.Cookie{
 		Name:  session.CookieName,
 		Value: "test",
@@ -71,8 +69,6 @@ func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionCookieIsInvalid(t *testi
 }
 
 func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsMissingFromStore(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	sessionID, err := session.Generate()
 	require.NoError(t, err)
 
@@ -91,7 +87,6 @@ func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsMissingFromStore(t *te
 }
 
 func TestAuthHandler_Returns204AndIdentityHeadersWhenSessionExists(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
 	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "123456789")
 
 	sessionID, err := session.Generate()
@@ -120,7 +115,6 @@ func TestAuthHandler_Returns204AndIdentityHeadersWhenSessionExists(t *testing.T)
 }
 
 func TestAuthHandler_Returns403WhenSessionUserIsNoLongerAllowed(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
 	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "987654321")
 
 	sessionID, err := session.Generate()
@@ -146,7 +140,6 @@ func TestAuthHandler_Returns403WhenSessionUserIsNoLongerAllowed(t *testing.T) {
 }
 
 func TestAuthHandler_AllowsSessionWhenDevAllowAllIsExplicit(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
 	t.Setenv("YA_AUTH_DEV_ALLOW_ALL", "true")
 
 	sessionID, err := session.Generate()
@@ -172,8 +165,6 @@ func TestAuthHandler_AllowsSessionWhenDevAllowAllIsExplicit(t *testing.T) {
 }
 
 func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsExpired(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	sessionID, err := session.Generate()
 	require.NoError(t, err)
 
@@ -198,8 +189,6 @@ func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsExpired(t *testing.T) 
 }
 
 func TestAuthHandler_ClearsCookieAndRedirectsWhenSessionIsRevoked(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	sessionID, err := session.Generate()
 	require.NoError(t, err)
 

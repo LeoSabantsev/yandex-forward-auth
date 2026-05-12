@@ -12,8 +12,6 @@ import (
 )
 
 func TestLogoutHandler_Returns204AndClearsCookieWhenCookieMissing(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	withSessionStore(t, session.NewMemoryStore())
 
 	res := performRequest("POST", "http://auth.example.com/logout", nil, nil)
@@ -27,8 +25,6 @@ func TestLogoutHandler_Returns204AndClearsCookieWhenCookieMissing(t *testing.T) 
 }
 
 func TestLogoutHandler_Returns204AndClearsCookieWhenCookieInvalid(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	withSessionStore(t, session.NewMemoryStore())
 
 	res := performRequest("POST", "http://auth.example.com/logout", nil, []*http.Cookie{
@@ -44,8 +40,6 @@ func TestLogoutHandler_Returns204AndClearsCookieWhenCookieInvalid(t *testing.T) 
 }
 
 func TestLogoutHandler_RevokesSessionAndClearsCookie(t *testing.T) {
-	t.Setenv("YA_AUTH_BASE_URL", "http://auth.example.com")
-
 	sessionID, err := session.Generate()
 	require.NoError(t, err)
 
