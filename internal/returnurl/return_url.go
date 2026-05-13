@@ -51,12 +51,32 @@ func (p Policy) sanitizeAbsolute(parsed *url.URL, defaultURL string) string {
 
 func (p Policy) hostAllowed(host string) bool {
 	for _, allowed := range p.AllowedHosts {
-		if host == normalizeHost(allowed) {
+		if matchHostPattern(normalizeHost(allowed), host) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func matchHostPattern(pattern, host string) bool {
+	if pattern == "" || host == "" {
+		return false
+	}
+	if !strings.Contains(pattern, "*") {
+		return pattern == host
+	}
+
+	if strings.Count(pattern, "*") != 1 || !strings.HasPrefix(pattern, "*.") {
+		return false
+	}
+
+	suffix := strings.TrimPrefix(pattern, "*.")
+	if suffix == "" || strings.Contains(suffix, "*") {
+		return false
+	}
+
+	return strings.HasSuffix(host, "."+suffix)
 }
 
 func normalizeHost(host string) string {

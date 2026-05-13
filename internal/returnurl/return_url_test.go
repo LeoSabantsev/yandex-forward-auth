@@ -94,3 +94,80 @@ func TestPolicySanitizeRejectsMalformedURL(t *testing.T) {
 
 	require.Equal(t, "https://app.example.com/", got)
 }
+
+func TestPolicySanitizeRejectsEmptyAllowedHost(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{""},
+		DefaultURL:   "https://app.example.com/",
+	}
+
+	got := policy.Sanitize("https://evil.example.com/private")
+
+	require.Equal(t, "https://app.example.com/", got)
+}
+
+func TestPolicySanitizeAllowsHTTPSHostFromSimpleWildcard(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{"*.example.com"},
+		DefaultURL:   "https://example.com/",
+	}
+
+	got1 := policy.Sanitize("https://testing.example.com")
+	got2 := policy.Sanitize("https://app.example.com")
+
+	require.Equal(t, "https://testing.example.com", got1)
+	require.Equal(t, "https://app.example.com", got2)
+}
+
+func TestPolicySanitizeDeniesApexHostFromSimpleWildcard(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{"*.example.com"},
+		DefaultURL:   "https://example.com/",
+	}
+	got := policy.Sanitize("https://example.com/private")
+	require.Equal(t, "https://example.com/", got)
+}
+
+func TestPolicySanitizeRejectsOverbroadWildcardPatterns(t *testing.T) {
+	for _, allowedHost := range []string{"*", "***"} {
+		t.Run(allowedHost, func(t *testing.T) {
+			policy := Policy{
+				AllowedHosts: []string{allowedHost},
+				DefaultURL:   "https://app.example.com/",
+			}
+			got := policy.Sanitize("https://evil.example.com/private")
+			require.Equal(t, "https://app.example.com/", got)
+		})
+	}
+}
+
+func TestPolicySanitizeAllowsMultiLevelSubdomainFromSimpleWildcard(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{"*.example.com"},
+		DefaultURL:   "https://example.com/",
+	}
+	got := policy.Sanitize("https://foo.bar.example.com/private")
+	require.Equal(t, "https://foo.bar.example.com/private", got)
+}
+
+func TestPolicySanitizeAllowsIPv6LiteralHost(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{"[::1]"},
+		DefaultURL:   "https://example.com/",
+	}
+
+	got := policy.Sanitize("https://[::1]/private")
+
+	require.Equal(t, "https://[::1]/private", got)
+}
+
+func TestPolicySanitizeDeniesHTTPSHostOutsideWildcard(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{"*.app.example.com"},
+		DefaultURL:   "https://app.example.com/",
+	}
+
+	got := policy.Sanitize("https://testing.example.com")
+
+	require.Equal(t, "https://app.example.com/", got)
+}
