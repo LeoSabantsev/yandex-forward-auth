@@ -60,42 +60,23 @@ func (p Policy) hostAllowed(host string) bool {
 }
 
 func matchHostPattern(pattern, host string) bool {
-	if pattern == "" {
+	if pattern == "" || host == "" {
 		return false
 	}
 	if !strings.Contains(pattern, "*") {
 		return pattern == host
 	}
 
-	parts := strings.Split(pattern, "*")
-	position := 0
-
-	first := parts[0]
-	if first != "" {
-		if !strings.HasPrefix(host, first) {
-			return false
-		}
-		position = len(first)
+	if strings.Count(pattern, "*") != 1 || !strings.HasPrefix(pattern, "*.") {
+		return false
 	}
 
-	for _, part := range parts[1 : len(parts)-1] {
-		if part == "" {
-			continue
-		}
-
-		index := strings.Index(host[position:], part)
-		if index == -1 {
-			return false
-		}
-		position += index + len(part)
+	suffix := strings.TrimPrefix(pattern, "*.")
+	if suffix == "" || strings.Contains(suffix, "*") {
+		return false
 	}
 
-	last := parts[len(parts)-1]
-	if last == "" {
-		return true
-	}
-
-	return len(host)-len(last) >= position && strings.HasSuffix(host, last)
+	return strings.HasSuffix(host, "."+suffix)
 }
 
 func normalizeHost(host string) string {
