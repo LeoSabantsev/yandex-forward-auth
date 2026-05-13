@@ -67,11 +67,12 @@ func Validate(id string) error {
 	return nil
 }
 
-func Clear(w http.ResponseWriter) {
+func Clear(w http.ResponseWriter, cookieDomain string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    "",
 		Path:     "/",
+		Domain:   cookieDomain,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
@@ -79,11 +80,12 @@ func Clear(w http.ResponseWriter) {
 	})
 }
 
-func Set(w http.ResponseWriter, sessionID string, ttl time.Duration) {
+func Set(w http.ResponseWriter, sessionID string, ttl time.Duration, cookieDomain string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    sessionID,
 		Path:     "/",
+		Domain:   cookieDomain,
 		MaxAge:   int(ttl.Seconds()),
 		HttpOnly: true,
 		Secure:   true,

@@ -33,14 +33,16 @@ func TestValidateIDRejectsBadValues(t *testing.T) {
 
 func TestClearCookieExpiresSessionCookie(t *testing.T) {
 	res := httptest.NewRecorder()
+	domain := "example.com"
 
-	Clear(res)
+	Clear(res, domain)
 
 	cookies := res.Result().Cookies()
 	require.Len(t, cookies, 1)
 
 	cookie := cookies[0]
 	require.Equal(t, CookieName, cookie.Name)
+	require.Equal(t, "example.com", cookies[0].Domain)
 	require.Equal(t, "/", cookie.Path)
 	require.Equal(t, -1, cookie.MaxAge)
 	require.True(t, cookie.HttpOnly)
@@ -53,13 +55,15 @@ func TestSetCookie(t *testing.T) {
 	require.NoError(t, err)
 
 	res := httptest.NewRecorder()
+	domain := "example.com"
 
-	Set(res, sessionID, time.Hour)
+	Set(res, sessionID, time.Hour, domain)
 
 	cookies := res.Result().Cookies()
 	require.Len(t, cookies, 1)
 	require.Equal(t, CookieName, cookies[0].Name)
 	require.Equal(t, sessionID, cookies[0].Value)
+	require.Equal(t, "example.com", cookies[0].Domain)
 	require.Equal(t, "/", cookies[0].Path)
 	require.Equal(t, 3600, cookies[0].MaxAge)
 	require.True(t, cookies[0].HttpOnly)

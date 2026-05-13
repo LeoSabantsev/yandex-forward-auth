@@ -37,6 +37,7 @@ func TestOAuthCallbackHandler_CreatesSessionAndRedirectsForValidStateRecord(t *t
 	t.Setenv("YANDEX_CLIENT_ID", "client-id")
 	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "123456789")
 	t.Setenv("YA_AUTH_SESSION_TTL", "30m")
+	t.Setenv("YA_AUTH_BASE_URL", "https://app.example.com/")
 
 	nonce, err := oauthstate.GenerateNonce()
 	require.NoError(t, err)
@@ -96,6 +97,7 @@ func TestOAuthCallbackCreatedSessionPassesAuth(t *testing.T) {
 	t.Setenv("YANDEX_CLIENT_ID", "client-id")
 	t.Setenv("YA_AUTH_ALLOWED_USER_IDS", "123456789")
 	t.Setenv("YA_AUTH_SESSION_TTL", "30m")
+	t.Setenv("YA_AUTH_BASE_URL", "https://app.example.com/")
 
 	sessionStore := session.NewMemoryStore()
 	withSessionStore(t, sessionStore)

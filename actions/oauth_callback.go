@@ -98,7 +98,11 @@ func (d *Dependencies) OAuthCallbackHandler(c buffalo.Context) error {
 		return c.Render(http.StatusInternalServerError, nil)
 	}
 
-	session.Set(c.Response(), sessionID, d.Config.SessionTTL)
+	domain, err := d.Config.GetCookieDomain()
+	if err != nil {
+		return c.Render(http.StatusInternalServerError, nil)
+	}
+	session.Set(c.Response(), sessionID, d.Config.SessionTTL, domain)
 	http.Redirect(c.Response(), c.Request(), record.ReturnURL, http.StatusFound)
 	return nil
 }

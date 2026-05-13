@@ -18,6 +18,7 @@ type YandexOAuthConfig struct {
 
 type Config struct {
 	BaseURL         string
+	CookieDomain    string
 	ReturnURLPolicy returnurl.Policy
 	Allowlist       allowlist.List
 	YandexOAuth     YandexOAuthConfig
@@ -25,8 +26,9 @@ type Config struct {
 }
 
 func Load() Config {
-	return Config{
-		BaseURL: strings.TrimRight(strings.TrimSpace(os.Getenv("YA_AUTH_BASE_URL")), "/"),
+	config := Config{
+		BaseURL:      strings.TrimRight(strings.TrimSpace(os.Getenv("YA_AUTH_BASE_URL")), "/"),
+		CookieDomain: strings.TrimSpace(os.Getenv("YA_AUTH_COOKIE_DOMAIN")),
 		ReturnURLPolicy: returnurl.Policy{
 			AllowedHosts: splitCSV(os.Getenv("YA_AUTH_ALLOWED_RETURN_HOSTS")),
 			DefaultURL:   strings.TrimSpace(os.Getenv("YA_AUTH_DEFAULT_REDIRECT_URL")),
@@ -45,6 +47,12 @@ func Load() Config {
 		},
 		SessionTTL: sessionTTL(),
 	}
+
+	if config.BaseURL == "" {
+		panic("Missing Base URL, which is required")
+	}
+
+	return config
 }
 
 func splitCSV(value string) []string {
