@@ -95,6 +95,17 @@ func TestPolicySanitizeRejectsMalformedURL(t *testing.T) {
 	require.Equal(t, "https://app.example.com/", got)
 }
 
+func TestPolicySanitizeRejectsEmptyAllowedHost(t *testing.T) {
+	policy := Policy{
+		AllowedHosts: []string{""},
+		DefaultURL:   "https://app.example.com/",
+	}
+
+	got := policy.Sanitize("https://evil.example.com/private")
+
+	require.Equal(t, "https://app.example.com/", got)
+}
+
 func TestPolicySanitizeAllowsHTTPSHostFromSimpleWildcard(t *testing.T) {
 	policy := Policy{
 		AllowedHosts: []string{"*.example.com"},

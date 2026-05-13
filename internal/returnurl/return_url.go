@@ -3,7 +3,6 @@ package returnurl
 import (
 	"net"
 	"net/url"
-	"regexp"
 	"strings"
 )
 
@@ -64,12 +63,39 @@ func matchHostPattern(pattern, host string) bool {
 	if pattern == "" {
 		return false
 	}
+	if !strings.Contains(pattern, "*") {
+		return pattern == host
+	}
 
-	re := regexp.QuoteMeta(pattern)
-	re = strings.ReplaceAll(re, `\*`, ".*")
+	parts := strings.Split(pattern, "*")
+	position := 0
 
-	matched, err := regexp.MatchString("^"+re+"$", host)
-	return err == nil && matched
+	first := parts[0]
+	if first != "" {
+		if !strings.HasPrefix(host, first) {
+			return false
+		}
+		position = len(first)
+	}
+
+	for _, part := range parts[1 : len(parts)-1] {
+		if part == "" {
+			continue
+		}
+
+		index := strings.Index(host[position:], part)
+		if index == -1 {
+			return false
+		}
+		position += index + len(part)
+	}
+
+	last := parts[len(parts)-1]
+	if last == "" {
+		return true
+	}
+
+	return len(host)-len(last) >= position && strings.HasSuffix(host, last)
 }
 
 func normalizeHost(host string) string {
