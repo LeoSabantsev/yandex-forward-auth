@@ -3,7 +3,7 @@ package returnurl
 import (
 	"net"
 	"net/url"
-	"path"
+	"regexp"
 	"strings"
 )
 
@@ -52,13 +52,24 @@ func (p Policy) sanitizeAbsolute(parsed *url.URL, defaultURL string) string {
 
 func (p Policy) hostAllowed(host string) bool {
 	for _, allowed := range p.AllowedHosts {
-		matched, err := path.Match(normalizeHost(allowed), host)
-		if err == nil && matched {
+		if matchHostPattern(normalizeHost(allowed), host) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func matchHostPattern(pattern, host string) bool {
+	if pattern == "" {
+		return false
+	}
+
+	re := regexp.QuoteMeta(pattern)
+	re = strings.ReplaceAll(re, `\*`, ".*")
+
+	matched, err := regexp.MatchString("^"+re+"$", host)
+	return err == nil && matched
 }
 
 func normalizeHost(host string) string {

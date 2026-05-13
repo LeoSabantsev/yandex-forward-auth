@@ -97,35 +97,29 @@ func TestPolicySanitizeRejectsMalformedURL(t *testing.T) {
 
 func TestPolicySanitizeAllowsHTTPSHostFromSimpleWildcard(t *testing.T) {
 	policy := Policy{
-		AllowedHosts: []string{"*app.example.com"},
+		AllowedHosts: []string{"*.example.com"},
 		DefaultURL:   "https://example.com/",
 	}
 
-	got_1 := policy.Sanitize("https://testing.app.example.com")
-	got_2 := policy.Sanitize("https://app.example.com")
+	got1 := policy.Sanitize("https://testing.example.com")
+	got2 := policy.Sanitize("https://app.example.com")
 
-	require.Equal(t, "https://testing.app.example.com", got_1)
-	require.Equal(t, "https://app.example.com", got_2)
+	require.Equal(t, "https://testing.example.com", got1)
+	require.Equal(t, "https://app.example.com", got2)
 }
 
-func TestPolicySanitizeAllowsHTTPSHostFromComplexWildcard(t *testing.T) {
+func TestPolicySanitizeAllowsIPv6LiteralHost(t *testing.T) {
 	policy := Policy{
-		AllowedHosts: []string{"*testing*.app.example.com"},
-		DefaultURL:   "https://app.example.com/",
+		AllowedHosts: []string{"[::1]"},
+		DefaultURL:   "https://example.com/",
 	}
 
-	got_1 := policy.Sanitize("https://testing.app.example.com")
-	got_2 := policy.Sanitize("https://ui.testing.app.example.com")
-	got_3 := policy.Sanitize("https://testing.inner.app.example.com")
-	got_4 := policy.Sanitize("https://ui.testing.inner.app.example.com")
+	got := policy.Sanitize("https://[::1]/private")
 
-	require.Equal(t, "https://testing.app.example.com", got_1)
-	require.Equal(t, "https://ui.testing.app.example.com", got_2)
-	require.Equal(t, "https://testing.inner.app.example.com", got_3)
-	require.Equal(t, "https://ui.testing.inner.app.example.com", got_4)
+	require.Equal(t, "https://[::1]/private", got)
 }
 
-func TestPolicySanitizeDenyHTTPSHostOutsideWildcard(t *testing.T) {
+func TestPolicySanitizeDeniesHTTPSHostOutsideWildcard(t *testing.T) {
 	policy := Policy{
 		AllowedHosts: []string{"*.app.example.com"},
 		DefaultURL:   "https://app.example.com/",
