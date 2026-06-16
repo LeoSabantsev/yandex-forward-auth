@@ -13,6 +13,9 @@ import (
 	"github.com/gobuffalo/x/sessions"
 	"github.com/rs/cors"
 	"github.com/unrolled/secure"
+
+	"yandex_forward_auth/internal/config"
+	"yandex_forward_auth/internal/utils/telemetry"
 )
 
 // ENV is used to help switch settings based on where the
@@ -38,9 +41,9 @@ var (
 // `ServeFiles` is a CATCH-ALL route, so it should always be
 // placed last in the route declarations, as it will prevent routes
 // declared after it to never be called.
-func App() *buffalo.App {
+func App(cfg config.Config) *buffalo.App {
 	appOnce.Do(func() {
-		app = newApp(NewDependencies())
+		app = newApp(NewDependencies(cfg))
 	})
 
 	return app
@@ -61,6 +64,10 @@ func newApp(deps *Dependencies) *buffalo.App {
 
 	// Log request parameters (filters apply).
 	app.Use(paramlogger.ParameterLogger)
+
+	if deps.Config.Telemetry.Enabled() {
+		app.Use(telemetry.Middleware())
+	}
 
 	// Set the request content type to JSON
 	app.Use(contenttype.Set("application/json"))

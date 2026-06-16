@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 )
 
 func (d *Dependencies) LoginHandler(c buffalo.Context) error {
+	log.Printf("login requested: rd=%q", c.Request().URL.Query().Get("rd"))
+
 	returnURL := d.Config.ReturnURLPolicy.Sanitize(c.Request().URL.Query().Get("rd"))
 
 	stateID, err := oauthstate.GenerateStateID()
