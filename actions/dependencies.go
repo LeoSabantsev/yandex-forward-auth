@@ -14,9 +14,9 @@ type Dependencies struct {
 	YandexClient    yandex.Client
 }
 
-func NewDependencies() *Dependencies {
+func NewDependencies(cfg config.Config) *Dependencies {
 	return &Dependencies{
-		Config:          config.Load(),
+		Config:          cfg,
 		SessionStore:    session.NewMemoryStore(),
 		OAuthStateStore: oauthstate.NewMemoryStore(),
 		YandexClient:    yandex.Client{},

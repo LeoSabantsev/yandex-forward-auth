@@ -6,12 +6,14 @@ import (
 	"text/tabwriter"
 
 	"yandex_forward_auth/actions"
+	"yandex_forward_auth/internal/config"
 
 	"github.com/gobuffalo/grift/grift"
 )
 
 var _ = grift.Add("routes", func(c *grift.Context) error {
-	app := actions.App()
+	appConfig := config.Load()
+	app := actions.App(appConfig)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "METHOD\tPATH\tNAME\tHANDLER")

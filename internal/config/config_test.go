@@ -80,6 +80,125 @@ func TestLoadReadsSessionTTL(t *testing.T) {
 	require.Equal(t, 30*time.Minute, cfg.SessionTTL)
 }
 
+func TestLoadDisablesTelemetryWithoutOTLPEndpoint(t *testing.T) {
+	t.Setenv("OTEL_SERVICE_NAME", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "")
+
+	cfg := Load()
+
+	require.False(t, cfg.Telemetry.Enabled())
+	require.Empty(t, cfg.Telemetry.Endpoint)
+	require.Empty(t, cfg.Telemetry.TracesEndpoint)
+	require.Empty(t, cfg.Telemetry.MetricsEndpoint)
+	require.Empty(t, cfg.Telemetry.LogsEndpoint)
+	require.Equal(t, DefaultTelemetryServiceName, cfg.Telemetry.ServiceName)
+}
+
+func TestLoadUsesSharedOTLPEndpointForAllTelemetrySignals(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel.example.com:4318")
+	t.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
+	t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "")
+
+	cfg := Load()
+
+	require.Equal(t, "http://otel.example.com:4318", cfg.Telemetry.Endpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/traces", cfg.Telemetry.TracesEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/metrics", cfg.Telemetry.MetricsEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/logs", cfg.Telemetry.LogsEndpoint)
+	require.True(t, cfg.Telemetry.TracesEnabled)
+	require.True(t, cfg.Telemetry.MetricsEnabled)
+	require.True(t, cfg.Telemetry.LogsEnabled)
+}
+
+func TestLoadAppendsHTTPPathsToSharedOTLPEndpointWithPathPrefix(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel.example.com:4318/collector")
+	t.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
+
+	cfg := Load()
+
+	require.Equal(t, "http://otel.example.com:4318/collector/v1/traces", cfg.Telemetry.TracesEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/collector/v1/metrics", cfg.Telemetry.MetricsEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/collector/v1/logs", cfg.Telemetry.LogsEndpoint)
+}
+
+func TestLoadUsesSignalSpecificOTLPEndpointsWhenSet(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel.example.com:4318")
+	t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://otel.example.com:4318/v1/traces")
+	t.Setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://otel.example.com:4318/v1/metrics")
+	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "http://otel.example.com:4318/v1/logs")
+
+	cfg := Load()
+
+	require.Equal(t, "http://otel.example.com:4318", cfg.Telemetry.Endpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/traces", cfg.Telemetry.TracesEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/metrics", cfg.Telemetry.MetricsEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/logs", cfg.Telemetry.LogsEndpoint)
+	require.True(t, cfg.Telemetry.TracesEnabled)
+	require.True(t, cfg.Telemetry.MetricsEnabled)
+	require.True(t, cfg.Telemetry.LogsEnabled)
+}
+
+func TestLoadEnablesOnlySignalsWithSpecificOTLPEndpoints(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "")
+	t.Setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://otel.example.com:4318/v1/metrics")
+	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", "http://otel.example.com:4318/v1/logs")
+
+	cfg := Load()
+
+	require.Empty(t, cfg.Telemetry.Endpoint)
+	require.Empty(t, cfg.Telemetry.TracesEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/metrics", cfg.Telemetry.MetricsEndpoint)
+	require.Equal(t, "http://otel.example.com:4318/v1/logs", cfg.Telemetry.LogsEndpoint)
+	require.False(t, cfg.Telemetry.TracesEnabled)
+	require.True(t, cfg.Telemetry.MetricsEnabled)
+	require.True(t, cfg.Telemetry.LogsEnabled)
+}
+
+func TestLoadReadsSharedOTLPProtocolForAllTelemetrySignals(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel.example.com:4318")
+	t.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", " HTTP/Protobuf ")
+
+	cfg := Load()
+
+	require.Equal(t, "http/protobuf", cfg.Telemetry.TracesProtocol)
+	require.Equal(t, "http/protobuf", cfg.Telemetry.MetricsProtocol)
+	require.Equal(t, "http/protobuf", cfg.Telemetry.LogsProtocol)
+}
+
+func TestLoadPrefersSignalSpecificOTLPProtocols(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel.example.com:4318")
+	t.Setenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
+	t.Setenv("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", "http/protobuf")
+	t.Setenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", " HTTP/PROTOBUF ")
+	t.Setenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", "")
+
+	cfg := Load()
+
+	require.Equal(t, "http/protobuf", cfg.Telemetry.TracesProtocol)
+	require.Equal(t, "http/protobuf", cfg.Telemetry.MetricsProtocol)
+	require.Equal(t, "grpc", cfg.Telemetry.LogsProtocol)
+}
+
+func TestLoadReadsOTELResourceAttributes(t *testing.T) {
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel.example.com:4318")
+	t.Setenv("OTEL_SERVICE_NAME", "test-service")
+	t.Setenv("OTEL_RESOURCE_ATTRIBUTES", "deployment.environment=local,service.name=ignored,team=core%20platform,missing-value")
+
+	cfg := Load()
+
+	require.Equal(t, []TelemetryResourceAttribute{
+		{Key: "deployment.environment", Value: "local"},
+		{Key: "team", Value: "core platform"},
+	}, cfg.Telemetry.ResourceAttrs)
+	require.Equal(t, "test-service", cfg.Telemetry.ServiceName)
+}
+
 func TestLoadFallsBackForInvalidSessionTTL(t *testing.T) {
 	t.Setenv("YA_AUTH_SESSION_TTL", "nope")
 

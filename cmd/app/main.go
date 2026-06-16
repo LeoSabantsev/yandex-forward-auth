@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"yandex_forward_auth/actions"
+	"yandex_forward_auth/internal/config"
+	"yandex_forward_auth/internal/utils/telemetry"
 )
 
 // main is the starting point for your Buffalo application.
@@ -13,7 +17,22 @@ import (
 // call `app.Serve()`, unless you don't want to start your
 // application that is. :)
 func main() {
-	app := actions.App()
+	appConfig := config.Load()
+
+	shutdownTelemetry, err := telemetry.Setup(context.Background(), appConfig.Telemetry)
+	if err != nil {
+		log.Printf("telemetry setup failed, continuing with standard logging: %v", err)
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := shutdownTelemetry(ctx); err != nil {
+			log.Printf("telemetry shutdown failed: %v", err)
+		}
+	}()
+
+	app := actions.App(appConfig)
 	if err := app.Serve(); err != nil {
 		log.Fatal(err)
 	}

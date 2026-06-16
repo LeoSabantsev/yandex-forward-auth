@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/gobuffalo/suite/v4"
+
+	"yandex_forward_auth/internal/config"
 )
 
 type ActionSuite struct {
@@ -16,7 +18,7 @@ func init() {
 }
 
 func Test_ActionSuite(t *testing.T) {
-	action, err := suite.NewActionWithFixtures(App(), os.DirFS("../fixtures"))
+	action, err := suite.NewActionWithFixtures(App(config.Load()), os.DirFS("../fixtures"))
 	if err != nil {
 		t.Fatal(err)
 	}
