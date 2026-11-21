@@ -6,6 +6,8 @@ https://hub.docker.com/r/levsab/yandex-forward-auth
 
 You do not need to build anything locally.
 
+For Kubernetes with Traefik, see the [working example](examples/kubernetes/README.md).
+
 ## Minimal Docker Compose
 
 ```yaml
